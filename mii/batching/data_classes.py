@@ -88,9 +88,7 @@ class Request:
     def is_done(self) -> bool:
         if self.ignore_eos:
             return False
-        if self.seq_length < self.min_new_tokens:
-            return False
-        return self._is_done
+        return False if self.seq_length < self.min_new_tokens else self._is_done
 
     @is_done.setter
     def is_done(self, is_done: bool) -> None:
@@ -162,9 +160,7 @@ class RequestBatch:
         return r in self.requests
 
     def __nonzero__(self) -> bool:
-        if len(self.requests) != 0:
-            return True
-        return False
+        return len(self.requests) != 0
 
     def __iter__(self) -> Iterator[Request]:
         return iter(self.requests)

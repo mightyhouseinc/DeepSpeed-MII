@@ -61,7 +61,7 @@ def model_name(request):
 
 @pytest.fixture(scope="function")
 def deployment_name(model_name):
-    return model_name + "-deployment"
+    return f"{model_name}-deployment"
 
 
 @pytest.fixture(scope="function", params=[mii.DeploymentType.LOCAL])
@@ -86,9 +86,7 @@ def ds_config(request):
 
 @pytest.fixture(scope="function")
 def replace_with_kernel_inject(model_name):
-    if "clip-vit" in model_name:
-        return False
-    return True
+    return "clip-vit" not in model_name
 
 
 @pytest.fixture(scope="function")

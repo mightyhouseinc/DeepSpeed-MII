@@ -35,7 +35,7 @@ class TopKLogitProcessor(BaseLogitProcessor):
         return logits
 
     def get_key(self) -> str:
-        return super().get_key() + f"_top_k={self.top_k}"
+        return f"{super().get_key()}_top_k={self.top_k}"
 
 
 class TopPLogitProcessor(BaseLogitProcessor):
@@ -60,7 +60,7 @@ class TopPLogitProcessor(BaseLogitProcessor):
         return logits
 
     def get_key(self) -> str:
-        return super().get_key() + f"_top_p={self.top_p}"
+        return f"{super().get_key()}_top_p={self.top_p}"
 
 
 class TemperatureLogitProcessor(BaseLogitProcessor):
@@ -72,7 +72,7 @@ class TemperatureLogitProcessor(BaseLogitProcessor):
         return logits / self.temperature
 
     def get_key(self) -> str:
-        return super().get_key() + f"_temperature={self.temperature}"
+        return f"{super().get_key()}_temperature={self.temperature}"
 
 
 class PipelineLogitProcessor(BaseLogitProcessor):
@@ -108,4 +108,4 @@ class NucleusSamplingLogitProcessor(BaseLogitProcessor):
         return self._processor(logits)
 
     def get_key(self) -> str:
-        return super().get_key() + f"_{self._processor.get_key()}"
+        return f"{super().get_key()}_{self._processor.get_key()}"

@@ -274,7 +274,9 @@ class ModelConfig(DeepSpeedConfigModel):
         if values.get("load_with_sys_mem"):
             model = values.get("model")
             task = values.get("task")
-            assert not (mii.utils.get_provider(model, task) == ModelProvider.DIFFUSERS), "`load_with_sys_mem` is not support with Stable Diffusion"
+            assert (
+                mii.utils.get_provider(model, task) != ModelProvider.DIFFUSERS
+            ), "`load_with_sys_mem` is not support with Stable Diffusion"
         return values
 
     @root_validator
@@ -368,9 +370,9 @@ class MIIConfig(DeepSpeedConfigModel):
         replica_num = self.model_config.replica_num
         replica_pool = _allocate_processes(hostfile, tensor_parallel, replica_num)
         replica_configs = []
+        # Reserver port for a LB proxy when replication is enabled
+        port_offset = 1
         for i, (hostname, gpu_indices) in enumerate(replica_pool):
-            # Reserver port for a LB proxy when replication is enabled
-            port_offset = 1
             base_port = port_number + i * tensor_parallel + port_offset
             tensor_parallel_ports = list(range(base_port, base_port + tensor_parallel))
             replica_torch_dist_port = torch_dist_port + (100 * i)
@@ -404,15 +406,17 @@ def _allocate_processes(hostfile_path, tensor_parallel, replica_num):
                 )
 
             allocated_num_on_host = slots - available_on_host
-            replica_pool.append((
-                host,
-                [
-                    i for i in range(
-                        allocated_num_on_host,
-                        allocated_num_on_host + tensor_parallel,
-                    )
-                ],
-            ))
+            replica_pool.append(
+                (
+                    host,
+                    list(
+                        range(
+                            allocated_num_on_host,
+                            allocated_num_on_host + tensor_parallel,
+                        )
+                    ),
+                )
+            )
             allocated_num += 1
 
             available_on_host -= tensor_parallel

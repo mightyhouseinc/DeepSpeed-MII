@@ -161,7 +161,7 @@ class RaggedBatchBase:
 
     def _print_profiled_times(self) -> None:
         self._iters += 1
-        if not (self._iters % 100 == 0):
+        if self._iters % 100 != 0:
             return
         for event, times in self._profiled_times.items():
             mean_time = sum(times) / len(times)
@@ -312,11 +312,10 @@ class RaggedBatchBase:
         for r in self.buffer:
             if r.is_flush_request:
                 self.scheduled_requests.append(r)
+            elif len(r.input_tokens) == 1:
+                next_token_gen_reqs.append(r)
             else:
-                if len(r.input_tokens) == 1:
-                    next_token_gen_reqs.append(r)
-                else:
-                    prompt_reqs.append(r)
+                prompt_reqs.append(r)
 
         # We want to process next token generation first
         self._do_schedule_requests(next_token_gen_reqs)
@@ -329,7 +328,7 @@ class RaggedBatchBase:
             self.scheduled_requests = RequestBatch()
             self.reset_request_status()
         else:
-            scheduled_requests_ids = set(id(r) for r in self.scheduled_requests)
+            scheduled_requests_ids = {id(r) for r in self.scheduled_requests}
             self.buffer = deque(
                 [r for r in self.buffer if id(r) not in scheduled_requests_ids])
 
@@ -380,14 +379,11 @@ class RaggedBatchBase:
         ignore_eos = kwargs.pop(IGNORE_EOS_KWARG, IGNORE_EOS_DEFAULT)
         return_full_text = kwargs.pop(RETURN_FULL_TEXT_KWARG, RETURN_FULL_TEXT_DEFAULT)
 
-        post_processing = []
-
         top_p = kwargs.pop(TOP_P_KWARG, TOP_P_DEFAULT)
         top_p_name = "_".join((TOP_P_NAME, str(top_p)))
         if top_p_name not in self._post_processors:
             self._post_processors[top_p_name] = TopPLogitProcessor(top_p=top_p)
-        post_processing.append(top_p_name)
-
+        post_processing = [top_p_name]
         top_k = kwargs.pop(TOP_K_KWARG, None)
         if top_k is not None:
             top_k_name = "_".join((TOP_K_NAME, str(top_k)))
@@ -403,8 +399,7 @@ class RaggedBatchBase:
                     temperature=temp)
             post_processing.append(temp_name)
 
-        do_sample = kwargs.pop(DO_SAMPLE_KWARG, DO_SAMPLE_DEFAULT)
-        if do_sample:
+        if do_sample := kwargs.pop(DO_SAMPLE_KWARG, DO_SAMPLE_DEFAULT):
             sampler_name = "_".join((SAMPLER_NAME, "logits"))
             if sampler_name not in self._post_processors:
                 self._post_processors[sampler_name] = LogitsSampler()

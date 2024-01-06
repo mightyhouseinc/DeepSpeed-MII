@@ -115,9 +115,7 @@ class MIIServer:
         # assign different ports to replicas because they could be on the same host
         worker_str += f"--master_port {replica_config.torch_dist_port}"
 
-        ds_launch_str = f"deepspeed {worker_str} --master_addr localhost --no_ssh_check --no_local_rank --no_python"
-
-        return ds_launch_str
+        return f"deepspeed {worker_str} --master_addr localhost --no_ssh_check --no_local_rank --no_python"
 
     def _initialize_service(self, mii_config):
         processes = []

@@ -43,15 +43,10 @@ class LogitsSampler(BaseGenerationSampler):
                torch.Tensor]:
         logits = logits.float()
         sampler = Categorical(logits=logits)
-        next_tokens = sampler.sample()
-        #logprobs = sampler.log_prob(next_tokens)
-        return next_tokens  #, logprobs
+        return sampler.sample()
 
 
 class GreedySampler(BaseGenerationSampler):
     def __call__(self, logits: torch.Tensor) -> Tuple[torch.LongTensor, torch.Tensor]:
         logits = logits.float()
-        #sampler = Categorical(logits=logits)
-        next_tokens = logits.argmax(dim=-1)
-        #logprobs = sampler.log_prob(next_tokens)
-        return next_tokens  #, logprobs
+        return logits.argmax(dim=-1)

@@ -51,10 +51,7 @@ version_str = open('version.txt', 'r').read().strip()
 
 MII_BUILD_STRING = 'MII_BUILD_STRING'
 BUILD_FILE = 'build.txt'
-mii_build_string = os.environ.get(MII_BUILD_STRING)
-
-# Building wheel for distribution, update version file
-if mii_build_string:
+if mii_build_string := os.environ.get(MII_BUILD_STRING):
     # Build string env specified, probably building for distribution
     with open(BUILD_FILE, 'w') as fd:
         fd.write(mii_build_string)

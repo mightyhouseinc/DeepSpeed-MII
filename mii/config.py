@@ -117,10 +117,11 @@ class ModelConfig(DeepSpeedConfigModel):
     def make_device_map_dict(cls, v):
         if isinstance(v, int):
             return {"localhost": [[v]]}
-        if isinstance(v, list) and isinstance(v[0], int):
-            return {"localhost": [v]}
-        if isinstance(v, list) and isinstance(v[0], list):
-            return {"localhost": v}
+        if isinstance(v, list):
+            if isinstance(v[0], int):
+                return {"localhost": [v]}
+            if isinstance(v[0], list):
+                return {"localhost": v}
         return v
 
     @root_validator
@@ -234,9 +235,9 @@ class MIIConfig(DeepSpeedConfigModel):
                                          self.model_config.replica_num,
                                          self.model_config.device_map)
         replica_configs = []
+        # Reserver port for a LB proxy when replication is enabled
+        port_offset = 1
         for i, (hostname, gpu_indices) in enumerate(replica_pool):
-            # Reserver port for a LB proxy when replication is enabled
-            port_offset = 1
             base_port = self.port_number + i * tensor_parallel + port_offset
             tensor_parallel_ports = list(range(base_port, base_port + tensor_parallel))
             replica_torch_dist_port = torch_dist_port + (100 * i)
@@ -275,7 +276,7 @@ def _allocate_devices(hostfile_path: str,
             ]
 
     # Assert that we have the correct number of mappings
-    device_map_slots = sum([len(slots_list) for slots_list in device_map.values()])
+    device_map_slots = sum(len(slots_list) for slots_list in device_map.values())
     if device_map_slots < replica_num:
         raise ValueError(
             f"Only able to place {device_map_slots} replicas, but {replica_num} replicas were requested."

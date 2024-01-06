@@ -77,12 +77,19 @@ def get_supported_models(task):
     supported_models = []
 
     for model_type, provider in SUPPORTED_MODEL_TYPES.items():
-        if provider == ModelProvider.HUGGING_FACE:
-            models = _get_hf_models_by_type(model_type, task)
-        elif provider == ModelProvider.ELEUTHER_AI:
-            if task == TaskType.TEXT_GENERATION:
-                models = [model_type]
-        elif provider == ModelProvider.DIFFUSERS:
+        if (
+            provider != ModelProvider.HUGGING_FACE
+            and provider == ModelProvider.ELEUTHER_AI
+            and task == TaskType.TEXT_GENERATION
+        ):
+            models = [model_type]
+        elif (
+            provider == ModelProvider.HUGGING_FACE
+            or provider != ModelProvider.ELEUTHER_AI
+        ) and provider in [
+            ModelProvider.HUGGING_FACE,
+            ModelProvider.DIFFUSERS,
+        ]:
             models = _get_hf_models_by_type(model_type, task)
         supported_models.extend(models)
     if not supported_models:
@@ -106,15 +113,13 @@ def check_if_task_and_model_is_valid(task, model_name):
 
 
 def full_model_path(model_path):
-    aml_model_dir = os.environ.get('AZUREML_MODEL_DIR', None)
-    if aml_model_dir:
+    if aml_model_dir := os.environ.get('AZUREML_MODEL_DIR', None):
         # (potentially) append relative model_path w. aml path
         assert os.path.isabs(aml_model_dir), f"AZUREML_MODEL_DIR={aml_model_dir} must be an absolute path"
-        if model_path:
-            assert not os.path.isabs(model_path), f"model_path={model_path} must be relative to append w. AML path"
-            return os.path.join(aml_model_dir, model_path)
-        else:
+        if not model_path:
             return aml_model_dir
+        assert not os.path.isabs(model_path), f"model_path={model_path} must be relative to append w. AML path"
+        return os.path.join(aml_model_dir, model_path)
     elif model_path:
         return model_path
     else:
@@ -189,9 +194,8 @@ def get_num_gpus(mii_config):
 
 def get_provider(model_name, task):
     if model_name == "gpt-neox":
-        provider = ModelProvider.ELEUTHER_AI
+        return ModelProvider.ELEUTHER_AI
     elif task == TaskType.TEXT2IMG:
-        provider = ModelProvider.DIFFUSERS
+        return ModelProvider.DIFFUSERS
     else:
-        provider = ModelProvider.HUGGING_FACE
-    return provider
+        return ModelProvider.HUGGING_FACE

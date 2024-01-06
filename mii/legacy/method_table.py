@@ -39,7 +39,7 @@ def proto_request_to_single_input(self, request):
 
 
 def proto_request_to_list(self, request):
-    args = ([r for r in request.request], )
+    args = (list(request.request), )
     kwargs = unpack_proto_query_kwargs(request.query_kwargs)
     return args, kwargs
 
@@ -92,7 +92,7 @@ class TextGenerationMethods(TaskMethods):
         if self.session_context[session_id] is None:
             self.session_context[session_id] = ""
         if len(args[0]) != 1:
-            raise ValueError(f"You can pass only one prompt with a session_id")
+            raise ValueError("You can pass only one prompt with a session_id")
 
         args = ([self.session_context[session_id] + args[0][0]], )
         return args
@@ -202,11 +202,12 @@ class ConversationalMethods(TaskMethods):
         # Create UUID from conversation ID
         conversation_id = uuid.uuid5(uuid.NAMESPACE_DNS, str(conversation_id))
 
-        conv = Conversation(text=text,
-                            conversation_id=conversation_id,
-                            past_user_inputs=past_user_inputs,
-                            generated_responses=generated_responses)
-        return conv
+        return Conversation(
+            text=text,
+            conversation_id=conversation_id,
+            past_user_inputs=past_user_inputs,
+            generated_responses=generated_responses,
+        )
 
     def pack_response_to_proto(self, conv, time_taken, model_time_taken):
         return modelresponse_pb2.ConversationReply(
