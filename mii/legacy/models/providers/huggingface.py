@@ -31,7 +31,7 @@ class MetaTensorPipeline(object):
             self.model = self.model.module
 
         # expand proto list into py-list
-        inputs = [i for i in inputs]
+        inputs = list(inputs)
         tokens = self.tokenizer.batch_encode_plus(inputs,
                                                   return_tensors="pt",
                                                   padding=True)
@@ -42,12 +42,7 @@ class MetaTensorPipeline(object):
         greedy_output = self.model.generate(**tokens, **kwargs)
         outputs = self.tokenizer.batch_decode(greedy_output, skip_special_tokens=True)
 
-        # construct output to align w. HF pipeline
-        output_dicts = []
-        for output in outputs:
-            output_dicts.append([{"generated_text": output}])
-
-        return output_dicts
+        return [[{"generated_text": output}] for output in outputs]
 
 
 def get_device(load_with_sys_mem=False):
@@ -89,7 +84,6 @@ def create_checkpoint_dict(model_name, model_path, checkpoint_dict):
         with open(os.path.join(model_path, "ds_inference_config.json")) as f:
             data = json.load(f)
         data["base_dir"] = model_path
-        return data
     else:
         checkpoint_files = [
             str(entry).split("/")[-1]
@@ -101,7 +95,8 @@ def create_checkpoint_dict(model_name, model_path, checkpoint_dict):
             "version": 1.0,
             "base_dir": model_path,
         }
-        return data
+
+    return data
 
 
 def load_with_meta_tensor(model_config):
@@ -130,23 +125,20 @@ def load_with_meta_tensor(model_config):
                                              model_config.model_path,
                                              model_config.checkpoint_dict)
     torch.distributed.barrier()
-    inference_pipeline = MetaTensorPipeline(model=model,
-                                            tokenizer=tokenizer,
-                                            checkpoint_dict=checkpoint_dict)
-    return inference_pipeline
+    return MetaTensorPipeline(
+        model=model, tokenizer=tokenizer, checkpoint_dict=checkpoint_dict
+    )
 
 
 def hf_provider(model_config):
     if model_config.meta_tensor:
         return load_with_meta_tensor(model_config)
-    else:
-        device = get_device(load_with_sys_mem=model_config.load_with_sys_mem)
-        inference_pipeline = pipeline(
-            model_config.task,
-            model=model_config.model if not is_aml() else model_config.model_path,
-            device=device,
-            framework="pt",
-            torch_dtype=model_config.dtype,
-            **model_config.pipeline_kwargs,
-        )
-        return inference_pipeline
+    device = get_device(load_with_sys_mem=model_config.load_with_sys_mem)
+    return pipeline(
+        model_config.task,
+        model=model_config.model if not is_aml() else model_config.model_path,
+        device=device,
+        framework="pt",
+        torch_dtype=model_config.dtype,
+        **model_config.pipeline_kwargs,
+    )

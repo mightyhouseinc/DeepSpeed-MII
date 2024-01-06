@@ -176,7 +176,7 @@ def generate_deployment_name(model_name_or_path: str):
 def init_distributed(model_config: "ModelConfig"):
     # If not running with a distributed launcher (e.g., deepspeed, torch) set some default environment variables
     required_env = ["RANK", "WORLD_SIZE", "MASTER_ADDR", "MASTER_PORT", "LOCAL_RANK"]
-    if not all([e in os.environ for e in required_env]):
+    if any(e not in os.environ for e in required_env):
         assert model_config.tensor_parallel == 1, "Attempting to run with TP > 1 and not using a distributed launcher like deepspeed or torch.distributed"
         os.environ["RANK"] = "0"
         os.environ["LOCAL_RANK"] = "0"

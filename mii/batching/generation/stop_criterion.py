@@ -29,10 +29,7 @@ class BaseGenerationStopCriterion(abc.ABC):
 class TokenStopCriterion(BaseGenerationStopCriterion):
     def __init__(self, token: Union[str, int], tokenizer) -> None:
         super().__init__(tokenizer=tokenizer)
-        if isinstance(token, str):
-            token_id = self.tokenizer.encode(token)[0]
-        else:
-            token_id = token
+        token_id = self.tokenizer.encode(token)[0] if isinstance(token, str) else token
         self.stop_token_id = token_id
 
     def forward(self, tokens: torch.LongTensor) -> torch.BoolTensor:
@@ -41,7 +38,7 @@ class TokenStopCriterion(BaseGenerationStopCriterion):
         return retval
 
     def get_key(self) -> str:
-        return self.__class__.__name__ + f"_token_id={self.stop_token_id}"
+        return f"{self.__class__.__name__}_token_id={self.stop_token_id}"
 
 
 class EosGenerationStopCriterion(BaseGenerationStopCriterion):
@@ -65,10 +62,11 @@ class NewLineDelimitedStopCriterion(BaseGenerationStopCriterion):
     def __init__(self, tokenizer):
         super().__init__(tokenizer=tokenizer)
         self.stop_token_ids = list(
-            set([self.tokenizer.tokenize(x)[0] for x in ["\n",
-                                                         "\r\n",
-                                                         "\n\n",
-                                                         ".\n\n"]]))
+            {
+                self.tokenizer.tokenize(x)[0]
+                for x in ["\n", "\r\n", "\n\n", ".\n\n"]
+            }
+        )
 
     def forward(self, tokens: torch.LongTensor) -> torch.BoolTensor:
         retval = torch.zeros_like(tokens, dtype=torch.bool)

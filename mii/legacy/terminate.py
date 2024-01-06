@@ -19,8 +19,6 @@ def terminate(deployment_name):
     except grpc.aio._call.AioRpcError as error:
         if error._code == grpc.StatusCode.UNAVAILABLE:
             logger.warn(f"Server for {deployment_name} not found")
-        else:
-            pass
     except (KeyError, TypeError) as error:
         pass
 

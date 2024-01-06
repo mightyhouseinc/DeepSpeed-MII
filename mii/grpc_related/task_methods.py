@@ -62,46 +62,43 @@ class TextGenerationMethods(TaskMethods):
                               prompts: List[str],
                               **query_kwargs: Dict[str,
                                                    Any]) -> Message:
-        proto_request = modelresponse_pb2.MultiStringRequest(
+        return modelresponse_pb2.MultiStringRequest(
             request=prompts,
             query_kwargs=kwarg_dict_to_proto(query_kwargs),
         )
-        return proto_request
 
     def unpack_request_from_proto(self,
                                   proto_request: Message) -> Tuple[List[str],
                                                                    Dict[str,
                                                                         Any]]:
-        prompts = [r for r in proto_request.request]
+        prompts = list(proto_request.request)
         kwargs = unpack_proto_query_kwargs(proto_request.query_kwargs)
         return prompts, kwargs
 
     def pack_response_to_proto(self, responses: List[Response]) -> Message:
-        proto_responses = []
-        for r in responses:
-            proto_responses.append(
-                modelresponse_pb2.SingleGenerationReply(
-                    response=r.generated_text,
-                    finish_reason=str(r.finish_reason.value),
-                    prompt_tokens=r.prompt_length,
-                    generated_tokens=r.generated_length,
-                    time_taken=-1,
-                    model_time_taken=-1,
-                ))
-
+        proto_responses = [
+            modelresponse_pb2.SingleGenerationReply(
+                response=r.generated_text,
+                finish_reason=str(r.finish_reason.value),
+                prompt_tokens=r.prompt_length,
+                generated_tokens=r.generated_length,
+                time_taken=-1,
+                model_time_taken=-1,
+            )
+            for r in responses
+        ]
         return modelresponse_pb2.MultiGenerationReply(response=proto_responses, )
 
     def unpack_response_from_proto(self, response: Message) -> List[Response]:
-        response_batch = []
-        for r in response.response:
-            response_batch.append(
-                Response(
-                    generated_text=r.response,
-                    prompt_length=r.prompt_tokens,
-                    generated_length=r.generated_tokens,
-                    finish_reason=r.finish_reason,
-                ))
-        return response_batch
+        return [
+            Response(
+                generated_text=r.response,
+                prompt_length=r.prompt_tokens,
+                generated_length=r.generated_tokens,
+                finish_reason=r.finish_reason,
+            )
+            for r in response.response
+        ]
 
 
 TASK_METHODS_DICT = {

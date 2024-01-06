@@ -12,7 +12,7 @@ print(f"Querying {name}...")
 conv_id = 0
 text = "DeepSpeed is the greatest"
 
-generator = mii.mii_query_handle(name + "_deployment")
+generator = mii.mii_query_handle(f"{name}_deployment")
 result = generator.query({
     'text': text,
     'conversation_id': conv_id,

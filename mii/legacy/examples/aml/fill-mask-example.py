@@ -7,7 +7,9 @@ import mii
 name = "bert-base-uncased"
 print(f"Deploying {name}...")
 
-mii.deploy(task='fill-mask',
-           model=name,
-           deployment_name=name + "-deployment",
-           deployment_type=mii.constants.DeploymentType.AML)
+mii.deploy(
+    task='fill-mask',
+    model=name,
+    deployment_name=f"{name}-deployment",
+    deployment_type=mii.constants.DeploymentType.AML,
+)

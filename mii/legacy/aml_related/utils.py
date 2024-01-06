@@ -71,9 +71,9 @@ def generate_aml_scripts(acr_name,
     output_dir = aml_output_path(deployment_name)
     code_path = os.path.join(output_dir, "code")
     model_path = os.path.join(output_dir, "model")
-    endpoint_name = deployment_name + "-endpoint"
-    environment_name = deployment_name + "-environment"
-    image_name = deployment_name + "-image"
+    endpoint_name = f"{deployment_name}-endpoint"
+    environment_name = f"{deployment_name}-environment"
+    image_name = f"{deployment_name}-image"
 
     # Dictionary to fill template values
     replace_dict = {

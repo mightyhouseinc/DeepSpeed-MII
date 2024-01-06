@@ -79,15 +79,14 @@ def _parse_kwargs_to_mii_config(
 
     # Fill mii_config dict with relevant kwargs, raise error on unknown kwargs
     for key, val in remaining_kwargs.items():
-        if key in MIIConfig.__dict__["__fields__"]:
-            if key in mii_config:
-                assert (
-                    mii_config.get(key) == val
-                ), f"{key} in mii_config must match {key}"
-            mii_config[key] = val
-        else:
+        if key not in MIIConfig.__dict__["__fields__"]:
             raise UnknownArgument(f"Keyword argument {key} not recognized")
 
+        if key in mii_config:
+            assert (
+                mii_config.get(key) == val
+            ), f"{key} in mii_config must match {key}"
+        mii_config[key] = val
     # Return the MIIConfig object
     mii_config = MIIConfig(**mii_config)
     return mii_config
@@ -155,20 +154,18 @@ def pipeline(
 
     inference_engine = load_model(model_config)
     tokenizer = load_tokenizer(model_config)
-    inference_pipeline = MIIPipeline(
+    return MIIPipeline(
         inference_engine=inference_engine,
         tokenizer=tokenizer,
         model_config=model_config,
     )
-    return inference_pipeline
 
 
 def async_pipeline(model_config: ModelConfig) -> MIIAsyncPipeline:
     inference_engine = load_model(model_config)
     tokenizer = load_tokenizer(model_config)
-    inference_pipeline = MIIAsyncPipeline(
+    return MIIAsyncPipeline(
         inference_engine=inference_engine,
         tokenizer=tokenizer,
         model_config=model_config,
     )
-    return inference_pipeline

@@ -35,9 +35,7 @@ def run_batch_processing(input_tensor: torch.Tensor,
     if not output_list:
         return input_tensor
 
-    # If there are unprocessed requests, append them to the output
-    unprocessed_idx = list(set(range(len(requests))).difference(idx_list))
-    if unprocessed_idx:
+    if unprocessed_idx := list(set(range(len(requests))).difference(idx_list)):
         idx_list.append(unprocessed_idx)
         output_list.append(input_tensor[unprocessed_idx])
 
@@ -66,8 +64,7 @@ def run_batch_sampler(input_logits: torch.Tensor,
                       processor_map: Dict[str,
                                           Any]) -> torch.Tensor:
     sampler_fns = {k: v for k, v in processor_map.items() if "Sampler" in k}
-    next_tokens = run_batch_processing(input_logits, requests, sampler_fns)
-    return next_tokens
+    return run_batch_processing(input_logits, requests, sampler_fns)
 
 
 def run_batch_stop_criterion(next_tokens: torch.Tensor,
@@ -75,5 +72,4 @@ def run_batch_stop_criterion(next_tokens: torch.Tensor,
                              processor_map: Dict[str,
                                                  Any]) -> torch.Tensor:
     stop_fns = {k: v for k, v in processor_map.items() if "Stop" in k}
-    done_tokens = run_batch_processing(next_tokens, requests, stop_fns)
-    return done_tokens
+    return run_batch_processing(next_tokens, requests, stop_fns)

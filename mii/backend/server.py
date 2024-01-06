@@ -125,7 +125,7 @@ class MIIServer:
 
         ds_launch_str = f"deepspeed {worker_str} --master_addr localhost --no_ssh_check --no_local_rank --no_python"
         if use_multiple_hosts:
-            ds_launch_str += f" --force_multi"
+            ds_launch_str += " --force_multi"
 
         return ds_launch_str
 
@@ -143,9 +143,15 @@ class MIIServer:
         for repl_config in mii_config.model_config.replica_configs:
             host_gpus[repl_config.hostname].extend(repl_config.gpu_indices)
 
-        use_multiple_hosts = len(
-            set(repl_config.hostname
-                for repl_config in mii_config.model_config.replica_configs)) > 1
+        use_multiple_hosts = (
+            len(
+                {
+                    repl_config.hostname
+                    for repl_config in mii_config.model_config.replica_configs
+                }
+            )
+            > 1
+        )
 
         # Start replica instances
         for repl_config in mii_config.model_config.replica_configs:
